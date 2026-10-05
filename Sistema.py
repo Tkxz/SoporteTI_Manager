@@ -1,5 +1,5 @@
 from mysql.connector import Error
-from database import get_connection
+from conexion import get_connection
 
 class SoporteRepository:
     def _execute(self, query, params=None, fetchone=False, fetchall=False, commit=False):

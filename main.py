@@ -1,6 +1,6 @@
 import flet as ft
 from mysql.connector import Error
-from repository import SoporteRepository
+from Sistema import SoporteRepository
 
 repo = SoporteRepository()
 
