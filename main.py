@@ -5,7 +5,7 @@ repo = SoporteRepository()
 
 def main(page: ft.Page):
     page.title = "SoporteTI Manager"
-    page.theme_mode = ft.ThemeMode.LIGHT
+    page.theme_mode = ft.ThemeMode.DARK
     page.padding = 20
 
     def snackbar(msg, error=False):

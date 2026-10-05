@@ -63,13 +63,3 @@ DB_USER=root
 DB_PASSWORD=tu_password
 DB_NAME=soporte_ti
 ```
-
-## Ejecutar
-
-```bash
-python main.py
-```
-
-## Autor
-
-Benjamín Domínguez Arellano
