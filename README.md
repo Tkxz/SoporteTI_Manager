@@ -1,130 +1,60 @@
 # SoporteTI Manager
 
-Sistema de gestión de tickets de soporte técnico desarrollado con **Python, Flet y MySQL**.
+Sistema de gestión de tickets de soporte técnico desarrollado con Python, Flet y MySQL.
 
-## Descripción
+## Tablas
 
-SoporteTI Manager permite registrar y administrar solicitudes de soporte técnico dentro de una organización. El sistema relaciona usuarios, técnicos, especialidades y tickets, permitiendo asignar responsables y consultar el estado de cada solicitud.
+Todas las tablas terminan en `KL`:
 
-## Problema que busca resolver
+- `usuariosKL`
+- `detalle_usuarioKL`
+- `tecnicosKL`
+- `especialidadesKL`
+- `tecnico_especialidadKL`
+- `ticketsKL`
+- `historial_ticketKL`
 
-En una organización, las solicitudes de soporte pueden perderse si se gestionan por mensajes, llamadas o anotaciones. Este sistema centraliza las solicitudes, permite saber quién reportó el problema, qué técnico está asignado, cuál es la especialidad necesaria y en qué estado se encuentra cada ticket.
+## Relaciones
 
-## Funciones principales
-
-- Registrar, consultar, modificar y eliminar usuarios.
-- Registrar técnicos y especialidades.
-- Asignar varias especialidades a un técnico.
-- Crear, editar, eliminar y filtrar tickets.
-- Visualizar datos relacionados mediante JOIN.
-- Filtrar tickets por texto y estado.
-- Mostrar resumen de tickets por estado.
-- Cerrar tickets mediante un procedimiento almacenado.
-- Registrar automáticamente cambios de estado mediante trigger.
-- Manejo de errores y mensajes de éxito o advertencia.
-
-## Tecnologías utilizadas
-
-- Python 3
-- Flet
-- MySQL
-- mysql-connector-python
-- python-dotenv
-- Git y GitHub
-
-## Modelo de datos
-
-El sistema incluye las siguientes tablas:
-
-1. `usuarios`
-2. `detalle_usuario`
-3. `tecnicos`
-4. `especialidades`
-5. `tecnico_especialidad`
-6. `tickets`
-7. `historial_ticket`
-
-### Relaciones
-
-- **1:1:** `usuarios` → `detalle_usuario`
-- **1:N:** `usuarios` → `tickets`
-- **1:N:** `tecnicos` → `tickets`
-- **1:N:** `especialidades` → `tickets`
-- **N:M:** `tecnicos` ↔ `especialidades`, resuelta por `tecnico_especialidad`
-- **1:N:** `tickets` → `historial_ticket`
+- 1:1: `usuariosKL` -> `detalle_usuarioKL`
+- 1:N: `usuariosKL` -> `ticketsKL`
+- 1:N: `tecnicosKL` -> `ticketsKL`
+- 1:N: `especialidadesKL` -> `ticketsKL`
+- N:M: `tecnicosKL` <-> `especialidadesKL`, mediante `tecnico_especialidadKL`
+- 1:N: `ticketsKL` -> `historial_ticketKL`
 
 ## Trigger
 
-`trg_ticket_estado_historial`
+`trg_ticket_estado_historialKL`
 
-Su función es registrar automáticamente en `historial_ticket` cada cambio de estado realizado sobre un ticket. Esto permite mantener trazabilidad real de la solicitud.
+Registra automáticamente los cambios de estado de un ticket en `historial_ticketKL`.
 
 ## Procedimiento almacenado
 
-`sp_cerrar_ticket`
+`sp_cerrar_ticketKL`
 
-Su función es cerrar un ticket de forma controlada. Valida que:
+Valida que el ticket exista, que no esté cerrado y que tenga un técnico asignado antes de cerrarlo.
 
-- el ticket exista;
-- el ticket todavía no esté cerrado;
-- exista un técnico asignado.
+## Ejecutar SQL
 
-Luego establece el estado como `Cerrado`, guarda la fecha de cierre y registra el cambio en el historial.
+Ejecuta en este orden:
 
-## Instalación
+1. `sql/01_schema.sql`
+2. `sql/02_trigger.sql`
+3. `sql/03_procedure.sql`
+4. `sql/04_seed.sql`
 
-### 1. Clonar el repositorio
-
-```bash
-git clone URL_DE_TU_REPOSITORIO
-cd SoporteTI_Manager
-```
-
-### 2. Crear entorno virtual
-
-Windows:
+## Instalar dependencias
 
 ```bash
-python -m venv venv
-venv\Scripts\activate
-```
-
-### 3. Instalar dependencias
-
-```bash
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 4. Crear la base de datos
+## Variables de entorno
 
-Ejecutar los archivos SQL en este orden:
-
-```text
-sql/01_schema.sql
-sql/02_trigger.sql
-sql/03_procedure.sql
-sql/04_seed.sql
-```
-
-El archivo `sql/05_queries.sql` contiene consultas JOIN y de agrupación solicitadas en la actividad.
-
-### 5. Configurar variables de entorno
-
-Copiar:
-
-```text
-.env.example
-```
-
-como:
-
-```text
-.env
-```
-
-y completar las credenciales reales de MySQL.
-
-Ejemplo:
+Copia `.env.example` a `.env`:
 
 ```env
 DB_HOST=localhost
@@ -134,26 +64,12 @@ DB_PASSWORD=tu_password
 DB_NAME=soporte_ti
 ```
 
-### 6. Ejecutar la aplicación
+## Ejecutar
 
 ```bash
 python main.py
 ```
 
-## Captura de la aplicación
-
-Agregar una captura dentro de:
-
-```text
-screenshots/app.png
-```
-
-Luego se puede mostrar aquí con:
-
-```md
-![Aplicación funcionando](screenshots/app.png)
-```
-
 ## Autor
 
-**Benjamín Domínguez Arellano**
+Benjamín Domínguez Arellano

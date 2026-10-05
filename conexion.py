@@ -2,7 +2,6 @@ import os
 from contextlib import contextmanager
 from dotenv import load_dotenv
 import mysql.connector
-from mysql.connector import Error
 
 load_dotenv()
 
@@ -16,14 +15,14 @@ DB_CONFIG = {
 
 @contextmanager
 def get_connection():
-    connection = None
+    conn = None
     try:
-        connection = mysql.connector.connect(**DB_CONFIG)
-        yield connection
-    except Error:
-        if connection and connection.is_connected():
-            connection.rollback()
+        conn = mysql.connector.connect(**DB_CONFIG)
+        yield conn
+    except Exception:
+        if conn and conn.is_connected():
+            conn.rollback()
         raise
     finally:
-        if connection and connection.is_connected():
-            connection.close()
+        if conn and conn.is_connected():
+            conn.close()
