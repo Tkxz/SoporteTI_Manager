@@ -31,8 +31,8 @@ def main(page: ft.Page):
             title=ft.Text("Confirmar eliminación"),
             content=ft.Text(texto),
             actions=[
-                ft.TextButton("Cancelar", on_click=cerrar),
-                ft.ElevatedButton("Eliminar", on_click=aceptar),
+                ft.TextButton(content="Cancelar", on_click=cerrar),
+                ft.Button(content="Eliminar", on_click=aceptar),
             ],
         )
         page.overlay.append(dialog)
@@ -209,8 +209,7 @@ def main(page: ft.Page):
             ft.Row([
                 tel,
                 ext,
-                ft.ElevatedButton(
-                    "Guardar",
+                ft.Button(content="Guardar",
                     icon=ft.Icons.SAVE,
                     on_click=guardar
                 )
@@ -374,14 +373,14 @@ def main(page: ft.Page):
                 t_nombre,
                 t_email,
                 t_nivel,
-                ft.ElevatedButton("Agregar", on_click=crear_tec)
+                ft.Button(content="Agregar", on_click=crear_tec)
             ], wrap=True),
             ft.Divider(),
             ft.Text("Registrar especialidad", weight=ft.FontWeight.BOLD),
             ft.Row([
                 e_nombre,
                 e_desc,
-                ft.ElevatedButton("Agregar", on_click=crear_esp)
+                ft.Button(content="Agregar", on_click=crear_esp)
             ], wrap=True),
             ft.Divider(),
             ft.Text(
@@ -391,7 +390,7 @@ def main(page: ft.Page):
             ft.Row([
                 tec_dd,
                 esp_dd,
-                ft.ElevatedButton("Asignar", on_click=asignar)
+                ft.Button(content="Asignar", on_click=asignar)
             ], wrap=True),
             ft.Container(
                 content=ft.Column(
@@ -703,13 +702,11 @@ def main(page: ft.Page):
                 wrap=True
             ),
             ft.Row([
-                ft.ElevatedButton(
-                    "Guardar",
+                ft.Button(content="Guardar",
                     icon=ft.Icons.SAVE,
                     on_click=guardar
                 ),
-                ft.OutlinedButton(
-                    "Limpiar",
+                ft.OutlinedButton(content="Limpiar",
                     on_click=lambda e: (limpiar(), page.update())
                 ),
             ]),
