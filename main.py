@@ -3,15 +3,31 @@ from repository import SoporteRepository
 
 repo = SoporteRepository()
 
+PRIMARY = "#1E40AF"
+PRIMARY_2 = "#2563EB"
+NAVY = "#0F172A"
+SUCCESS = "#15803D"
+WARNING = "#C2410C"
+DANGER = "#B91C1C"
+INFO = "#0369A1"
+BACKGROUND = "#EEF2F7"
+SURFACE = "#FFFFFF"
+TEXT = "#0F172A"
+MUTED = "#64748B"
+BORDER = "#CBD5E1"
+
+
+
 def main(page: ft.Page):
     page.title = "SoporteTI Manager"
-    page.theme_mode = ft.ThemeMode.DARK
-    page.padding = 20
+    page.theme_mode = ft.ThemeMode.LIGHT
+    page.bgcolor = BACKGROUND
+    page.padding = 0
 
     def snackbar(msg, error=False):
         page.snack_bar = ft.SnackBar(
             content=ft.Text(msg),
-            bgcolor=ft.Colors.RED_700 if error else ft.Colors.GREEN_700,
+            bgcolor=DANGER if error else SUCCESS,
         )
         page.snack_bar.open = True
         page.update()
@@ -39,47 +55,277 @@ def main(page: ft.Page):
         dialog.open = True
         page.update()
 
-    title = ft.Text("SoporteTI Manager", size=30, weight=ft.FontWeight.BOLD)
-    subtitle = ft.Text("Gestión de tickets de soporte TI")
-    content = ft.Container(expand=True)
+    title = ft.Text(
+        "SoporteTI Manager",
+        size=26,
+        weight=ft.FontWeight.BOLD,
+        color="#FFFFFF",
+    )
+    subtitle = ft.Text(
+        "Centro de gestión de soporte técnico",
+        color="#DBEAFE",
+        size=13,
+    )
+    content = ft.Container(expand=True, padding=24)
+
+    def panel(child, padding=18):
+        return ft.Container(
+            content=child,
+            bgcolor=SURFACE,
+            padding=padding,
+            border_radius=14,
+            border=ft.Border.all(1, BORDER),
+        )
+
+    def metric_card(title_text, value, icon, bg, fg, subtitle_text=""):
+        return ft.Container(
+            content=ft.Row(
+                [
+                    ft.Container(
+                        content=ft.Icon(icon, color="#FFFFFF", size=26),
+                        bgcolor=fg,
+                        width=52,
+                        height=52,
+                        border_radius=12,
+                        alignment=ft.Alignment.CENTER,
+                    ),
+                    ft.Column(
+                        [
+                            ft.Text(title_text, size=13, color=MUTED),
+                            ft.Text(
+                                str(value),
+                                size=28,
+                                weight=ft.FontWeight.BOLD,
+                                color=TEXT,
+                            ),
+                            ft.Text(subtitle_text, size=11, color=MUTED) if subtitle_text else ft.Container(),
+                        ],
+                        spacing=1,
+                    ),
+                ],
+                spacing=14,
+            ),
+            bgcolor=bg,
+            padding=18,
+            width=225,
+            border_radius=14,
+            border=ft.Border.all(1, BORDER),
+        )
+
+    def status_chip(texto, fg, bg):
+        return ft.Container(
+            content=ft.Text(texto, size=11, weight=ft.FontWeight.BOLD, color=fg),
+            bgcolor=bg,
+            padding=ft.Padding.symmetric(horizontal=10, vertical=5),
+            border_radius=999,
+        )
 
     def dashboard_view():
         try:
-            data = repo.resumen()
-            cards = []
-            for item in data:
-                cards.append(
-                    ft.Card(
-                        content=ft.Container(
-                            content=ft.Column([
-                                ft.Text(item["estado"], size=16),
-                                ft.Text(
-                                    str(item["total"]),
-                                    size=30,
-                                    weight=ft.FontWeight.BOLD
-                                ),
-                            ]),
-                            padding=20,
-                            width=200,
-                        )
+            resumen_rows = repo.resumen()
+            tickets = repo.listar_tickets("", "Todos")
+            usuarios = repo.listar_usuarios("")
+            tecnicos = repo.listar_tecnicos()
+            especialidades = repo.listar_especialidades()
+
+            resumen = {r["estado"]: r["total"] for r in resumen_rows}
+            total = len(tickets)
+            abiertos = resumen.get("Abierto", 0)
+            proceso = resumen.get("En proceso", 0)
+            resueltos = resumen.get("Resuelto", 0)
+            cerrados = resumen.get("Cerrado", 0)
+            criticos = sum(1 for t in tickets if t["prioridad"] == "Crítica")
+            sin_asignar = sum(1 for t in tickets if t["tecnico"] == "Sin asignar")
+
+            prioridad_info = {
+                "Baja": ("#166534", "#DCFCE7"),
+                "Media": ("#075985", "#E0F2FE"),
+                "Alta": ("#9A3412", "#FFEDD5"),
+                "Crítica": ("#991B1B", "#FEE2E2"),
+            }
+            estado_info = {
+                "Abierto": ("#075985", "#E0F2FE"),
+                "En proceso": ("#9A3412", "#FFEDD5"),
+                "Resuelto": ("#166534", "#DCFCE7"),
+                "Cerrado": ("#475569", "#E2E8F0"),
+            }
+
+            recent_rows = []
+            for t in tickets[:6]:
+                pfg, pbg = prioridad_info.get(t["prioridad"], (MUTED, "#E2E8F0"))
+                efg, ebg = estado_info.get(t["estado"], (MUTED, "#E2E8F0"))
+                recent_rows.append(
+                    ft.DataRow(
+                        cells=[
+                            ft.DataCell(ft.Text(f'#{t["id_ticket"]}', weight=ft.FontWeight.BOLD)),
+                            ft.DataCell(ft.Text(t["titulo"])),
+                            ft.DataCell(ft.Text(t["usuario"])),
+                            ft.DataCell(ft.Text(t["tecnico"])),
+                            ft.DataCell(status_chip(t["prioridad"], pfg, pbg)),
+                            ft.DataCell(status_chip(t["estado"], efg, ebg)),
+                        ]
                     )
                 )
 
-            if not cards:
-                cards = [ft.Text("No hay tickets registrados.")]
+            if recent_rows:
+                recent_content = ft.Row(
+                    [
+                        ft.DataTable(
+                            columns=[
+                                ft.DataColumn(ft.Text("ID")),
+                                ft.DataColumn(ft.Text("Ticket")),
+                                ft.DataColumn(ft.Text("Usuario")),
+                                ft.DataColumn(ft.Text("Técnico")),
+                                ft.DataColumn(ft.Text("Prioridad")),
+                                ft.DataColumn(ft.Text("Estado")),
+                            ],
+                            rows=recent_rows,
+                        )
+                    ],
+                    scroll=ft.ScrollMode.AUTO,
+                )
+            else:
+                recent_content = ft.Container(
+                    content=ft.Column(
+                        [
+                            ft.Icon(ft.Icons.INBOX, size=40, color=MUTED),
+                            ft.Text("Todavía no hay tickets registrados.", color=MUTED),
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
+                    padding=25,
+                    alignment=ft.Alignment.CENTER,
+                )
 
-            content.content = ft.Column([
-                ft.Text("Resumen de tickets", size=24, weight=ft.FontWeight.BOLD),
-                ft.Row(cards, wrap=True),
-                ft.Text("Resumen generado con GROUP BY sobre ticketsKL."),
-            ])
+            content.content = ft.Column(
+                [
+                    ft.Row(
+                        [
+                            ft.Column(
+                                [
+                                    ft.Text(
+                                        "Panel principal",
+                                        size=30,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=TEXT,
+                                    ),
+                                    ft.Text(
+                                        "Vista general del servicio de soporte.",
+                                        color=MUTED,
+                                    ),
+                                ],
+                                spacing=2,
+                            ),
+                            ft.Container(expand=True),
+                            ft.Container(
+                                content=ft.Row(
+                                    [
+                                        ft.Icon(ft.Icons.CIRCLE, color=SUCCESS, size=12),
+                                        ft.Text("Sistema operativo", color=SUCCESS, size=12),
+                                    ],
+                                    spacing=6,
+                                ),
+                                bgcolor="#DCFCE7",
+                                padding=ft.Padding.symmetric(horizontal=12, vertical=7),
+                                border_radius=999,
+                            ),
+                        ]
+                    ),
+
+                    ft.Text(
+                        "Estado de tickets",
+                        size=17,
+                        weight=ft.FontWeight.BOLD,
+                        color=TEXT,
+                    ),
+                    ft.Row(
+                        [
+                            metric_card("Tickets totales", total, ft.Icons.CONFIRMATION_NUMBER, "#EFF6FF", PRIMARY, "Todos los registros"),
+                            metric_card("Abiertos", abiertos, ft.Icons.MARK_EMAIL_UNREAD, "#E0F2FE", INFO, "Esperando atención"),
+                            metric_card("En proceso", proceso, ft.Icons.SYNC, "#FFF7ED", WARNING, "Actualmente atendidos"),
+                            metric_card("Resueltos", resueltos, ft.Icons.CHECK_CIRCLE, "#F0FDF4", SUCCESS, "Problemas solucionados"),
+                        ],
+                        wrap=True,
+                        spacing=14,
+                    ),
+                    ft.Row(
+                        [
+                            metric_card("Cerrados", cerrados, ft.Icons.ARCHIVE, "#F8FAFC", "#475569", "Casos finalizados"),
+                            metric_card("Críticos", criticos, ft.Icons.WARNING, "#FEF2F2", DANGER, "Prioridad crítica"),
+                            metric_card("Sin asignar", sin_asignar, ft.Icons.PERSON_OFF, "#FFF7ED", WARNING, "Requieren técnico"),
+                            metric_card("Usuarios", len(usuarios), ft.Icons.PEOPLE, "#F5F3FF", "#6D28D9", "Solicitantes"),
+                        ],
+                        wrap=True,
+                        spacing=14,
+                    ),
+
+                    ft.Text(
+                        "Recursos del sistema",
+                        size=17,
+                        weight=ft.FontWeight.BOLD,
+                        color=TEXT,
+                    ),
+                    ft.Row(
+                        [
+                            metric_card("Técnicos", len(tecnicos), ft.Icons.ENGINEERING, "#ECFDF5", "#047857", "Personal disponible"),
+                            metric_card("Especialidades", len(especialidades), ft.Icons.CATEGORY, "#FDF4FF", "#A21CAF", "Áreas de soporte"),
+                        ],
+                        wrap=True,
+                        spacing=14,
+                    ),
+
+                    panel(
+                        ft.Column(
+                            [
+                                ft.Row(
+                                    [
+                                        ft.Text(
+                                            "Tickets recientes",
+                                            size=18,
+                                            weight=ft.FontWeight.BOLD,
+                                            color=TEXT,
+                                        ),
+                                        ft.Container(expand=True),
+                                        ft.Text(
+                                            "Últimos 6 registros",
+                                            size=12,
+                                            color=MUTED,
+                                        ),
+                                    ]
+                                ),
+                                recent_content,
+                            ],
+                            spacing=12,
+                        )
+                    ),
+                ],
+                spacing=16,
+                scroll=ft.ScrollMode.AUTO,
+                expand=True,
+            )
+
         except Exception as ex:
-            content.content = ft.Text(f"Error al cargar el resumen: {ex}")
+            content.content = panel(
+                ft.Column(
+                    [
+                        ft.Icon(ft.Icons.ERROR_OUTLINE, color=DANGER, size=40),
+                        ft.Text(
+                            "No se pudo cargar el panel",
+                            size=20,
+                            weight=ft.FontWeight.BOLD,
+                            color=TEXT,
+                        ),
+                        ft.Text(str(ex), color=MUTED),
+                    ],
+                    spacing=8,
+                )
+            )
+
         page.update()
 
     def usuarios_view():
-        nombre = ft.TextField(label="Nombre", width=220)
-        email = ft.TextField(label="Correo", width=240)
+        nombre = ft.TextField(label="Nombre completo", width=220)
+        email = ft.TextField(label="Correo electrónico", width=240)
         dep = ft.TextField(label="Departamento", width=200)
         tel = ft.TextField(label="Teléfono", width=180)
         ext = ft.TextField(label="Extensión", width=120)
@@ -150,10 +396,12 @@ def main(page: ft.Page):
                                     ft.Row([
                                         ft.IconButton(
                                             icon=ft.Icons.EDIT,
+                                            tooltip="Editar",
                                             on_click=editar_factory(r)
                                         ),
                                         ft.IconButton(
                                             icon=ft.Icons.DELETE,
+                                            tooltip="Eliminar",
                                             on_click=eliminar_factory(r["id_usuario"])
                                         ),
                                     ])
@@ -204,7 +452,8 @@ def main(page: ft.Page):
         buscar.on_change = lambda e: cargar(buscar.value or "")
 
         content.content = ft.Column([
-            ft.Text("Usuarios", size=24, weight=ft.FontWeight.BOLD),
+            ft.Text("Usuarios", size=26, weight=ft.FontWeight.BOLD, color=TEXT),
+            ft.Text("Registra y administra a las personas que pueden solicitar soporte.", color=MUTED),
             ft.Row([nombre, email, dep], wrap=True),
             ft.Row([
                 tel,
@@ -228,7 +477,7 @@ def main(page: ft.Page):
 
     def tecnicos_view():
         t_nombre = ft.TextField(label="Nombre técnico", width=220)
-        t_email = ft.TextField(label="Correo", width=240)
+        t_email = ft.TextField(label="Correo electrónico", width=240)
         t_nivel = ft.Dropdown(
             label="Nivel",
             width=170,
@@ -241,8 +490,8 @@ def main(page: ft.Page):
         )
 
         e_nombre = ft.TextField(label="Especialidad", width=220)
-        e_desc = ft.TextField(label="Descripción", width=300)
-        tec_dd = ft.Dropdown(label="Técnico", width=250)
+        e_desc = ft.TextField(label="Descripción del problema", width=300)
+        tec_dd = ft.Dropdown(label="Técnico asignado", width=250)
         esp_dd = ft.Dropdown(label="Especialidad", width=250)
 
         tabla = ft.DataTable(
@@ -365,8 +614,13 @@ def main(page: ft.Page):
         content.content = ft.Column([
             ft.Text(
                 "Técnicos y especialidades",
-                size=24,
-                weight=ft.FontWeight.BOLD
+                size=26,
+                weight=ft.FontWeight.BOLD,
+                color=TEXT
+            ),
+            ft.Text(
+                "Organiza al equipo de soporte y las áreas que puede atender.",
+                color=MUTED
             ),
             ft.Text("Registrar técnico", weight=ft.FontWeight.BOLD),
             ft.Row([
@@ -404,9 +658,9 @@ def main(page: ft.Page):
         refrescar()
 
     def tickets_view():
-        titulo = ft.TextField(label="Título", width=300)
+        titulo = ft.TextField(label="Título del problema", width=300)
         descripcion = ft.TextField(
-            label="Descripción",
+            label="Descripción del problema",
             width=420,
             multiline=True,
             min_lines=2,
@@ -435,12 +689,12 @@ def main(page: ft.Page):
             ]
         )
 
-        usuario = ft.Dropdown(label="Usuario", width=250)
-        tecnico = ft.Dropdown(label="Técnico", width=250)
+        usuario = ft.Dropdown(label="Usuario solicitante", width=250)
+        tecnico = ft.Dropdown(label="Técnico asignado", width=250)
         especialidad = ft.Dropdown(label="Especialidad", width=250)
 
         buscar = ft.TextField(
-            label="Buscar ticket/usuario",
+            label="Buscar ticket o usuario",
             prefix_icon=ft.Icons.SEARCH,
             width=300
         )
@@ -608,6 +862,7 @@ def main(page: ft.Page):
                                     ft.Row([
                                         ft.IconButton(
                                             icon=ft.Icons.EDIT,
+                                            tooltip="Editar",
                                             on_click=editar_factory(r)
                                         ),
                                         ft.IconButton(
@@ -618,6 +873,7 @@ def main(page: ft.Page):
                                         ),
                                         ft.IconButton(
                                             icon=ft.Icons.DELETE,
+                                            tooltip="Eliminar",
                                             on_click=eliminar_factory(
                                                 r["id_ticket"]
                                             )
@@ -694,7 +950,8 @@ def main(page: ft.Page):
             snackbar(f"Error cargando relaciones: {ex}", True)
 
         content.content = ft.Column([
-            ft.Text("Tickets", size=24, weight=ft.FontWeight.BOLD),
+            ft.Text("Tickets", size=26, weight=ft.FontWeight.BOLD, color=TEXT),
+            ft.Text("Crea, asigna, busca y actualiza solicitudes de soporte.", color=MUTED),
             ft.Row([titulo, prioridad, estado], wrap=True),
             descripcion,
             ft.Row(
@@ -728,48 +985,91 @@ def main(page: ft.Page):
         if idx == 0:
             dashboard_view()
         elif idx == 1:
-            tickets_view()
-        elif idx == 2:
             usuarios_view()
-        else:
+        elif idx == 2:
             tecnicos_view()
+        else:
+            tickets_view()
 
     nav = ft.NavigationRail(
         selected_index=0,
+        bgcolor="#E2E8F0",
         label_type=ft.NavigationRailLabelType.ALL,
-        min_width=90,
+        min_width=96,
         destinations=[
             ft.NavigationRailDestination(
                 icon=ft.Icons.DASHBOARD,
                 label="Inicio"
             ),
             ft.NavigationRailDestination(
-                icon=ft.Icons.CONFIRMATION_NUMBER,
-                label="Tickets"
-            ),
-            ft.NavigationRailDestination(
                 icon=ft.Icons.PEOPLE,
                 label="Usuarios"
             ),
             ft.NavigationRailDestination(
-                icon=ft.Icons.BUILD,
+                icon=ft.Icons.ENGINEERING,
                 label="Técnicos"
+            ),
+            ft.NavigationRailDestination(
+                icon=ft.Icons.CONFIRMATION_NUMBER,
+                label="Tickets"
             ),
         ],
         on_change=nav_change
     )
 
     page.add(
-        ft.Column([
-            title,
-            subtitle,
-            ft.Divider(),
-            ft.Row([
-                nav,
-                ft.VerticalDivider(width=1),
-                content
-            ], expand=True),
-        ], expand=True)
+        ft.Column(
+            [
+                ft.Container(
+                    content=ft.Row(
+                        [
+                            ft.Container(
+                                content=ft.Icon(ft.Icons.SUPPORT_AGENT, color="#FFFFFF", size=28),
+                                bgcolor=PRIMARY_2,
+                                width=46,
+                                height=46,
+                                border_radius=12,
+                                alignment=ft.Alignment.CENTER,
+                            ),
+                            ft.Column([title, subtitle], spacing=1),
+                            ft.Container(expand=True),
+                            ft.Container(
+                                content=ft.Text(
+                                    "Soporte TI",
+                                    color="#DBEAFE",
+                                    size=12,
+                                    weight=ft.FontWeight.BOLD,
+                                ),
+                                bgcolor="#1E3A8A",
+                                padding=ft.Padding.symmetric(horizontal=12, vertical=7),
+                                border_radius=999,
+                            ),
+                        ],
+                        spacing=12,
+                    ),
+                    bgcolor=NAVY,
+                    padding=ft.Padding.symmetric(horizontal=24, vertical=15),
+                ),
+                ft.Row(
+                    [
+                        ft.Container(
+                            content=nav,
+                            bgcolor="#E2E8F0",
+                            padding=ft.Padding.only(top=12),
+                        ),
+                        ft.Container(
+                            content=content,
+                            expand=True,
+                            bgcolor=BACKGROUND,
+                        ),
+                    ],
+                    expand=True,
+                    spacing=0,
+                ),
+            ],
+            expand=True,
+            spacing=0,
+        )
     )
 
     dashboard_view()
