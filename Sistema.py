@@ -159,7 +159,7 @@ class SoporteRepository:
         if estado != "Todos":
             q += " AND tk.estado=%s"
             params.append(estado)
-        q += " ORDER BY tk.fecha_creacion DESC"
+        q += " ORDER BY tk.id_ticket ASC"
         return self._execute(q, tuple(params), fetchall=True)
 
     def crear_ticket(self, titulo, descripcion, prioridad, usuario_id, tecnico_id, especialidad_id):

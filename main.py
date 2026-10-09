@@ -24,10 +24,10 @@ def main(page: ft.Page):
     page.bgcolor = BACKGROUND
     page.padding = 0
 
-    def snackbar(msg, error=False):
+    def snackbar(msg, error=False, color=None):
         page.snack_bar = ft.SnackBar(
             content=ft.Text(msg),
-            bgcolor=DANGER if error else SUCCESS,
+            bgcolor=color or (DANGER if error else SUCCESS),
         )
         page.snack_bar.open = True
         page.update()
@@ -356,7 +356,7 @@ def main(page: ft.Page):
         def eliminar(uid):
             try:
                 repo.eliminar_usuario(uid)
-                snackbar("Usuario eliminado correctamente.")
+                snackbar("Usuario eliminado correctamente.", color=DANGER)
                 cargar(buscar.value or "")
             except Exception as ex:
                 snackbar(f"No se pudo eliminar: {ex}", True)
@@ -431,7 +431,7 @@ def main(page: ft.Page):
                         tel.value,
                         ext.value
                     )
-                    snackbar("Usuario actualizado.")
+                    snackbar("Usuario actualizado.", color=INFO)
                 else:
                     repo.crear_usuario(
                         nombre.value,
@@ -505,7 +505,7 @@ def main(page: ft.Page):
         def quitar(tid, eid):
             try:
                 repo.quitar_especialidad(tid, eid)
-                snackbar("Asignación eliminada.")
+                snackbar("Asignación eliminada.", color=DANGER)
                 refrescar()
             except Exception as ex:
                 snackbar(f"Error: {ex}", True)
@@ -772,7 +772,7 @@ def main(page: ft.Page):
         def eliminar(tid):
             try:
                 repo.eliminar_ticket(tid)
-                snackbar("Ticket eliminado.")
+                snackbar("Ticket eliminado.", color=DANGER)
                 cargar()
             except Exception as ex:
                 snackbar(f"No se pudo eliminar: {ex}", True)
@@ -784,7 +784,8 @@ def main(page: ft.Page):
                     "Cierre realizado desde la aplicación Flet."
                 )
                 snackbar(
-                    "Ticket cerrado mediante procedimiento almacenado."
+                    "Ticket cerrado mediante procedimiento almacenado.",
+                    color=INFO
                 )
                 cargar()
             except Exception as ex:
@@ -918,7 +919,7 @@ def main(page: ft.Page):
                         tid,
                         eid
                     )
-                    snackbar("Ticket actualizado.")
+                    snackbar("Ticket actualizado.", color=INFO)
                 else:
                     if not usuario.value:
                         snackbar("Selecciona un usuario.", True)

@@ -17,7 +17,7 @@ LEFT JOIN tecnicosKL t
     ON t.id_tecnico = tk.tecnico_id
 INNER JOIN especialidadesKL e
     ON e.id_especialidad = tk.especialidad_id
-ORDER BY tk.fecha_creacion DESC;
+ORDER BY tk.id_ticket ASC;
 
 -- GROUP BY
 SELECT
